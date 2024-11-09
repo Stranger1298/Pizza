@@ -1,7 +1,61 @@
+import React, { useState } from 'react';
 import './App.css';
 import './index.css';
+import Header from './components/Header';
+import Pizza from './components/Pizza';
+import Pizzalist from './components/Pizzalist';
+import Cart from './components/Cart';
+import Footer from './components/Footer';
+
 function App() {
-  const pizza_list = [
+  const [cart, setCart] = useState([]);
+  const [showCart, setShowCart] = useState(false);
+  const [orderStatus, setOrderStatus] = useState(false); // Track order status
+
+  const addToCart = (pizza, quantity) => {
+    if (quantity <= 0) return; // Don't add if quantity is 0 or less
+    setCart((prevCart) => {
+      const existingPizza = prevCart.find(item => item.name === pizza.name);
+      if (existingPizza) {
+        // Update quantity if pizza already in cart
+        return prevCart.map(item =>
+          item.name === pizza.name ? { ...item, quantity: item.quantity + quantity } : item
+        );
+      }
+      // Add new pizza to cart if not already there
+      return [...prevCart, { ...pizza, quantity }];
+    });
+  };
+
+  const removeFromCart = (pizza) => {
+    setCart((prevCart) => {
+      const existingPizza = prevCart.find(item => item.name === pizza.name);
+      if (existingPizza.quantity === 1) {
+        // Remove pizza completely if quantity is 1
+        return prevCart.filter(item => item.name !== pizza.name);
+      }
+      // Decrease quantity if more than 1
+      return prevCart.map(item =>
+        item.name === pizza.name ? { ...item, quantity: item.quantity - 1 } : item
+      );
+    });
+  };
+
+  const clearCart = () => {
+    setCart([]); // Clear the cart
+  };
+
+  const handleOrder = () => {
+    if (cart.length === 0) {
+      alert("Please add items to the cart before placing an order.");
+    } else {
+      clearCart(); // Clear the cart after order
+      setOrderStatus(true); // Show order confirmation message
+      setTimeout(() => setOrderStatus(false), 5000); // Hide message after 5 seconds
+    }
+  };
+
+  const pizzaList = [
     {
       name: "Margherita",
       ingredients: "Tomato Sauce, Mozzarella, Basil",
@@ -17,126 +71,57 @@ function App() {
       IsSold: false
     },
     {
-      name: "BBQ Chicken",
-      ingredients: "BBQ Sauce, Mozzarella, Chicken, Red Onions, Cilantro",
-      price: "$11.99",
-      photo: "https://images.pexels.com/photos/2619967/pexels-photo-2619967.jpeg?cs=srgb&dl=pizza-2619967.jpg&fm=jpg",
+      name: "Four Cheese",
+      ingredients: "Mozzarella, Parmesan, Gorgonzola, Ricotta",
+      price: "$12.99",
+      photo: "https://www.vegrecipesofindia.com/wp-content/uploads/2020/11/pizza-recipe.jpg",
+      IsSold: false
+    },
+    {
+      name: "Spicy Buffalo",
+      ingredients: "Buffalo Sauce, Mozzarella, Chicken, Jalapenos",
+      price: "$11.49",
+      photo: "https://www.vegrecipesofindia.com/wp-content/uploads/2020/11/pizza-recipe.jpg",
       IsSold: true
+    },
+    {
+      name: "Mediterranean",
+      ingredients: "Tomato Sauce, Mozzarella, Feta, Olives, Artichokes, Red Peppers",
+      price: "$10.99",
+      photo: "https://www.vegrecipesofindia.com/wp-content/uploads/2020/11/pizza-recipe.jpg",
+      IsSold: false
     }
-    ,
-    {
-      name:"Hawaiian",
-    ingredients:"Tomato Sauce, Mozzarella, Ham, Pineapple",
-    price:"$10.99",
-    photo:"https://images7.alphacoders.com/596/596343.jpg",
-    IsSold:true
-    },
-    {
-      name:"Veggie",
-      ingredients:"Tomato Sauce, Mozzarella, Bell Peppers, Olives, Onions, Mushrooms",
-      price:"$10.49",
-      photo:"https://www.engelvoelkers.com/wp-content/uploads/2014/07/pizza-stock.jpg",
-      IsSold:false
-    },
-    {
-      name:"Meat Lover's",
-    ingredients:"Tomato Sauce, Mozzarella, Pepperoni, Sausage, Ham, Bacon",
-    price:"$12.49",
-    photo:"https://vendify-demos.astoundify.com/tasti/wp-content/uploads/sites/4/2020/12/top-view-pepperoni-pizza-with-mushroom-sausages-bell-pepper-olive-corn-black-wooden-1536x1024.jpg",
-    IsSold:true
-    },
-    {
-      name: "BBQ Chicken",
-      ingredients: "BBQ Sauce, Mozzarella, Chicken, Red Onions, Cilantro",
-      price: "$11.99",
-      photo: "https://www.tasteofhome.com/wp-content/uploads/2021/01/New-York-Style-Pizza_EXPS_FT20_105578_F_1217_1.jpg",
-      IsSold: true
-    },
-    {
-      name: "BBQ Chicken",
-      ingredients: "BBQ Sauce, Mozzarella, Chicken, Red Onions, Cilantro",
-      price: "$11.99",
-      photo: "https://wallup.net/wp-content/uploads/2017/11/22/371886-food-pizza.jpg",
-      IsSold: true
-    }
-    
   ];
 
   return (
     <div>
-      <Header />
+      <Header 
+        cartCount={cart.reduce((total, item) => total + item.quantity, 0)} 
+        toggleCart={() => setShowCart(!showCart)} 
+      />
       <Pizza />
       <div className="pizza-list-container">
-        {pizza_list.map((pizza, index) => (
+        {pizzaList.map((pizza, index) => (
           <Pizzalist 
             key={index}
-            name={pizza.name}
-            ingredients={pizza.ingredients}
-            price={pizza.price}
-            pic={pizza.photo}
-            IsSold={pizza.IsSold}
+            pizza={pizza}
+            addToCart={addToCart}
+            cart={cart} // Pass cart to update UI in real-time
           />
         ))}
       </div>
-      <Footer />
-    </div>
-  );
-}
-
-function Pizzalist(props) {
-  return (
-    <div className="pizza-list">
-      <img src={props.pic} alt={props.name} />
-      <h1>{props.name}</h1>
-      <p>{props.ingredients}</p>
-      <p className="price">{props.price}</p>
-      <button className="bg-slate-200 w-40 h-10 rounded-full">{props.IsSold ? 'In Stock' : 'Out of Stock'}</button>
+      {showCart && <Cart cartItems={cart} addToCart={addToCart} removeFromCart={removeFromCart} />}
       
-    </div>
-  );
-}
-
-function Header() {
-  return (
-    <div className="header">
-      <h1 className="heading">React Pizza</h1>
-      
-    </div>
-  );
-}
-
-function Pizza() {
-  return (
-    <div className="pizza">
-      <h2 className="p-heading">OUR MENU</h2>
-      <p className="p-para">Ever looked at Pizza Toppings and wondered, "WHY SO LESS"?
-      we made the pizzas that we all deserve - PIZZAS</p>
-    </div>
-  );
-}
-
-function Footer() {
-  const hour = new Date().getHours();
-  const openHour = 12;
-  const closeHour = 22;
-  const isOpen = hour >= openHour && hour <= closeHour;
-  console.log(isOpen);
-
-  return (
-    <div className="footer p-6 bg-gray-100 text-center">
-      {isOpen && (
-        <div className="order mb-4">
-          <p>We're open until {closeHour}:00. Come visit us or order online.</p>
-          <button className="rounded-md bg-violet-500 hover:bg-violet-400 active:bg-violet-700 focus:outline-none focus:ring focus:ring-violet-200 text-white font-semibold py-2 px-4 shadow-lg mt-2">
-            Order
-          </button>
+      {/* Show order confirmation message */}
+      {orderStatus && (
+        <div className="order-confirmation">
+          <p>Your order has been accepted. Please hang out tight, it will be delivered soon!</p>
         </div>
       )}
-      <p>&copy; 2024 React Pizza. All rights reserved.</p>
+      
+      <Footer handleOrder={handleOrder} cartItems={cart} />
     </div>
   );
 }
-
-
 
 export default App;
